@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "2950756151",
+    "project_id": "accesoarecursos",
+    "storage_bucket": "accesoarecursos.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:2950756151:android:a33d2cf99a9a945be64cb2",
+        "android_client_info": {
+          "package_name": "com.example.accesoarecursos"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBJcyLlJeJR9DtU8-a9HYFGdF5ad_gIAGw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
