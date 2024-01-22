@@ -13,16 +13,21 @@ import androidx.activity.result.contract.ActivityResultContracts
 import com.example.accesoarecursos.databinding.ActivityMainBinding
 import android.provider.MediaStore
 import android.util.Log
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageReference
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.util.UUID
 
 class MainActivity: AppCompatActivity() {
     lateinit var imagen: ImageButton
     lateinit var binding: ActivityMainBinding
-
-
-    private fun guardarImagenEnGaleria(image: Bitmap) {
+    private lateinit var storage: FirebaseStorage
+    private lateinit var storageReference: StorageReference
+    val db = FirebaseFirestore.getInstance()
+   private fun guardarImagenEnGaleria(image: Bitmap) {
         // Obtener el URI de la imagen en la galería
         val imageUri = insertarImagenEnGaleria(image, "Imagen desde la Cámara", "Descripción")
 
@@ -79,11 +84,48 @@ class MainActivity: AppCompatActivity() {
         if(uri!=null) { //Si la uri de la imagen seleccionada no es nula
             //asigna la uri a nuestro imageButton
             imagen.setImageURI(uri)
+            //Subir la imagen seleccionada a Firebase Storage
+            subirImagenAFirebase(uri)
         }else {
             //no se ha seleccionado ninguna imagen
         }
     }
 
+    private fun subirImagenAFirebase(imageUri: Uri) {
+        //Generar un nombre aleatorio para la imagen
+        val nombreImagen = UUID.randomUUID().toString()
+
+        //Referencia que apunta a un objeto dentro del espacio de
+    // almacenamiento de Storage y que se encuentra en una carpeta
+        //llamada "imagenes" con el nombre ($nombreImagen)
+        val referenciaImagen = storageReference.child("imagenes/$nombreImagen")
+
+        //Subir la imagen a Firebase Storage
+        referenciaImagen.putFile(imageUri)
+            .addOnSuccessListener {
+                //Imagen subida exitosamente
+                //Obtenemos la URL de descarga por si queremos almacenarla
+                //en Firebase Firestore
+                referenciaImagen.downloadUrl.addOnSuccessListener { urlDescarga ->
+                    almacenarImagenFirestore("prueba@gmail.com", urlDescarga.toString())
+                }.addOnFailureListener {
+
+                    //No se ha podido obtener la url de descarga de la imagen
+                }
+            }
+            .addOnFailureListener {
+                //No se ha podido subir la imagen
+            }
+
+    }
+
+    private fun almacenarImagenFirestore(correoUsuario: String, urlImagen: String) {
+        //Accede a la colección 'usuarios' y al documento con id 'prueba@gmail.com'
+        db.collection("usuarios").document(correoUsuario)
+            .set(mapOf(
+                "imagen" to urlImagen
+            ))
+    }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -91,6 +133,10 @@ class MainActivity: AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         imagen=binding.imageButton
+
+        //Inicializamos Firebase Storage
+        storage = FirebaseStorage.getInstance()
+        storageReference = storage.reference
 
         //pickFoto es un lanzador que maneja el resultado de capturar una imagen desde la cámara.
         val pickFoto = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
